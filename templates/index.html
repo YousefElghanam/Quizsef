@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home Page
+{% endblock %}
+
+{% block main %}
+    <div class="container">
+        <div class="section">
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Stock</th>
+                        <th>Shares</th>
+                        <th>Price</th>
+                        <th>Value of holdings</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set total = namespace(value=0) %}
+                    {% for row, i in packed: %}
+                        <tr>
+                            <td>{{ row.stock }}</td>
+                            <td>{{ row.amount }}</td>
+                            <td>{{ stock[i] | usd }}</td>
+                            <td>{{ (row.amount * stock[i]) | usd }}</td>
+                        </tr>
+                        {% set total.value = total.value + (row.amount * stock[i]) %}
+                    {% endfor %}
+
+                    <tr>
+                        <td><b>Total</b></td>
+                        <td></td>
+                        <td></td>
+                        <td><b>{{ total.value | usd }}</b></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="section">
+            <h3>CASH: {{ balance.0.cash | usd }}</h3>
+        </div>
+        <div class="section">
+            <h3>GRAND TOTAL: {{ (balance.0.cash + total.value) | usd }}</h3>
+        </div>
+    </div>
+{% endblock %}
