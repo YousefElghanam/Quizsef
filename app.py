@@ -105,32 +105,44 @@ def register():
     session.clear()
 
     if request.method == "POST":
+        # Store input
+        username = request.form.get("username")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        confirmation = request.form.get("confirmation")
+        
         # Ensure username was submitted
-        if not request.form.get("username"):
+        if not username:
+            return apology("must provide username", 400)
+
+        elif not email:
             return apology("must provide username", 400)
 
         # Ensure username does not already exist
-        elif len(db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))) == 1:
+        elif len(db.execute("SELECT * FROM users WHERE username = ?", username)) == 1:
             return apology("username already exists", 400)
 
-        # Ensure password and confirmation ware submitted
-        elif not request.form.get("password"):
+        elif len(db.execute("SELECT * FROM users WHERE email = ?", email)) == 1:
+            return apology("email already exists", 400)
+
+        # Ensure password and confirmation were submitted
+        elif not password:
             return apology("must provide password", 400)
 
-        elif not request.form.get("confirmation"):
+        elif not confirmation:
             return apology("must provide confirmation", 400)
 
         # Ensure password and confirmation match
-        elif not request.form.get("password") == request.form.get("confirmation"):
+        elif not password == confirmation:
             return apology("Confirmation does not match Password", 400)
 
         # Add user to database
-        db.execute("INSERT INTO 'users' ('username','hash') VALUES (?)",
-                   (request.form.get("username"),
-                    generate_password_hash(password=request.form.get("password"), method='pbkdf2:sha256', salt_length=8)))
+        db.execute("INSERT INTO 'users' ('username','email','hash') VALUES (?,?,?)",
+                   (username), (email),
+                    generate_password_hash(password=password, method='pbkdf2:sha256', salt_length=8))
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+        rows = db.execute("SELECT * FROM users WHERE username = ?", username)
 
         # Remember which user has logged in
         session["user_id"] = rows[0]["id"]
