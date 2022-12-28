@@ -18,6 +18,17 @@
         <div class="mb-3">
             <input class="form-control mx-auto w-auto" id="confirmation" name="confirmation" placeholder="Confirmation" type="password">
         </div>
+        <div class="wrapper">
+            <input type="radio" name="usertype" id="option-1" value="student" checked>
+            <input type="radio" name="usertype" id="option-2" value="teacher">
+            <label for="option-1" class="option option-1">
+                <span>Student</span>
+            </label>
+            <label for="option-2" class="option option-2">
+                <span>Teacher</span>
+            </label>
+        </div>
+        <br>
         <button class="btn btn-primary" type="submit">Register</button>
     </form>
 {% endblock %}

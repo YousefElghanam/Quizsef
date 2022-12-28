@@ -31,13 +31,13 @@ def after_request(response):
     return response
 
 
-@app.route("/")
+@app.route("/teacher")
 @login_required
 def index():
     """Show portfolio of stocks"""
 
     # Render index.html
-    return render_template("index.html")
+    return render_template("teacherindex.html")
 
 
 @app.route("/history")
@@ -110,6 +110,7 @@ def register():
         email = request.form.get("email")
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
+        usertype = request.form.get("usertype")
         
         # Ensure username was submitted
         if not username:
@@ -135,11 +136,14 @@ def register():
         # Ensure password and confirmation match
         elif not password == confirmation:
             return apology("Confirmation does not match Password", 400)
+        
+        elif not usertype:
+            return apology("please choose student or teacher")
 
         # Add user to database
-        db.execute("INSERT INTO 'users' ('username','email','hash') VALUES (?,?,?)",
+        db.execute("INSERT INTO 'users' ('username','email','hash','isteacher') VALUES (?,?,?,?)",
                    (username), (email),
-                    generate_password_hash(password=password, method='pbkdf2:sha256', salt_length=8))
+                    generate_password_hash(password=password, method='pbkdf2:sha256', salt_length=8), (1 if usertype=="teacher" else None))
 
         # Query database for username
         rows = db.execute("SELECT * FROM users WHERE username = ?", username)
