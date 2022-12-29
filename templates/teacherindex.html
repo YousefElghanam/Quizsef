@@ -12,14 +12,28 @@
                     <tr>
                         <th>Exam name</th>
                         <th>Completion Rate</th>
-                        <th>Puplish Date</th>
+                        <th>Puplish Time</th>
                         <th>Deadline</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for row in history %}
+                    {% for row in exams %}
                         <tr>
-                            <td><!-- table data here -->></td>
+                            <td>{{ row.name }}</td>
+                            <td>{{ row.completion }} %</td>
+                            <td>
+                                <table>
+                                    <!-- maybe put row tag here ?? <<<<<<<<<<<<<<<<<<<< -->
+                                    <td>{{ row.puplishdate }}</td>
+                                    <td>{{ row.puplishtime }}</td>
+                                </table>
+                            </td>
+                            <td>
+                                <table>
+                                    <td>{{ row.deadlinedate }}</td>
+                                    <td>{{ row.deadlinetime }}</td>
+                                </table>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>

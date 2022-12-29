@@ -7,11 +7,14 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from utils import apology, login_required
 
+
 # Configure application
 app = Flask(__name__)
 
+
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
@@ -31,13 +34,29 @@ def after_request(response):
     return response
 
 
-@app.route("/teacher")
+@app.route("/")
 @login_required
 def index():
-    """Show portfolio of stocks"""
+    
+    # If user is teacher
+    isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])
+    
+    if isteacher[0]["isteacher"]:
+        
+        # Store rows of exams table
+        exams = db.execute("SELECT * FROM exams WHERE user_id = ?", session["user_id"])
+        
+        return render_template("teacherindex.html", exams=exams)
+    
+    # If user is student
+    else:
+        return render_template("studentindex.html")
+        
 
-    # Render index.html
-    return render_template("teacherindex.html")
+@app.route("/makeexam")
+@login_required
+def make_exam():
+    """ make exam """
 
 
 @app.route("/history")
@@ -105,6 +124,7 @@ def register():
     session.clear()
 
     if request.method == "POST":
+        
         # Store input
         username = request.form.get("username")
         email = request.form.get("email")
@@ -116,8 +136,9 @@ def register():
         if not username:
             return apology("must provide username", 400)
 
+        # Ensure email was submitted
         elif not email:
-            return apology("must provide username", 400)
+            return apology("must provide email", 400)
 
         # Ensure username does not already exist
         elif len(db.execute("SELECT * FROM users WHERE username = ?", username)) == 1:
