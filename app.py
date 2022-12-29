@@ -46,7 +46,7 @@ def index():
         # Store rows of exams table
         exams = db.execute("SELECT * FROM exams WHERE user_id = ?", session["user_id"])
         
-        return render_template("teacherindex.html", exams=exams)
+        return render_template("teacherindex.html", exams=exams, isteacher=isteacher)
     
     # If user is student
     else:
@@ -220,4 +220,7 @@ def settings():
 
     # On visiting "/settings"
     else:
-        return render_template("settings.html")
+        # If user is teacher
+        isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])
+        
+        return render_template("settings.html", isteacher=isteacher)
