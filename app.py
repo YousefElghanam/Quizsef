@@ -70,10 +70,10 @@ def make_exam():
             return apology("must provide number of questions (a positive integer)", 403)
 
         try:
-            if int(request.form.get("nquestions")) < 1:
-                return apology("must provide a positive integer", 403)
+            if int(request.form.get("nquestions")) < 1 or int(request.form.get("nquestions")) > 25:
+                return apology("must provide a positive integer (1-25)", 403)
         except (TypeError, ValueError):
-            return apology("number of questions must be an integer number", 403)
+            return apology("number of questions must be an integer number (1-25)", 403)
 
         if not request.form.get("puplishdate") or not request.form.get("puplishtime") or not request.form.get("deadlinedate") or not request.form.get("deadlinetime"):
             return apology("must provide puplish and deadline dates and times", 403)
@@ -101,7 +101,8 @@ def make_exam():
 @login_required
 def makequestions():
     if request.method == "POST":
-        print("post")
+        questions = {}
+        
         
     else:
         examid = session["examid"]

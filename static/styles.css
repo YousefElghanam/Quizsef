@@ -21,6 +21,17 @@ nav .navbar-brand .green
 {
     color: #2e944b;
 }
+.answerrow {
+  text-align: center;
+}
+.answer {
+  display: inline-block;
+  padding: 0.5rem 0.5rem;
+  vertical-align: middle;
+}
+.stretchsize {
+  align-items: stretch;
+}
 
 @import url('https://fonts.googleapis.com/css?family=Lato:400,500,600,700&display=swap');
 
