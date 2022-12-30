@@ -1,7 +1,7 @@
 import os
 
 from cs50 import SQL
-from flask import Flask, redirect, render_template, request, session
+from flask import Flask, redirect, render_template, request, session, url_for
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -53,10 +53,61 @@ def index():
         return render_template("studentindex.html")
         
 
-@app.route("/makeexam")
+@app.route("/makeexam", methods=["GET", "POST"])
 @login_required
 def make_exam():
-    """ make exam """
+    
+    # User reacher route via POST
+    if request.method == "POST":
+        
+        # Ensure all fields are filled
+        
+        if not request.form.get("examname"):
+            return apology("must provide a name for the exam", 403)
+        
+        # Ensure number of questions is entered and is a positive integer
+        if not request.form.get("nquestions"):
+            return apology("must provide number of questions (a positive integer)", 403)
+
+        try:
+            if int(request.form.get("nquestions")) < 1:
+                return apology("must provide a positive integer", 403)
+        except (TypeError, ValueError):
+            return apology("number of questions must be an integer number", 403)
+
+        if not request.form.get("puplishdate") or not request.form.get("puplishtime") or not request.form.get("deadlinedate") or not request.form.get("deadlinetime"):
+            return apology("must provide puplish and deadline dates and times", 403)
+        
+        userid = session["user_id"]
+        name = request.form.get("examname")
+        nquestions = request.form.get("nquestions")
+        puplishdate = request.form.get("puplishdate")
+        puplishtime = request.form.get("puplishtime")
+        deadlinedate = request.form.get("deadlinedate")
+        deadlinetime = request.form.get("deadlinetime")
+        
+        db.execute("INSERT INTO 'exams' ('user_id', 'name', 'nquestions', 'puplishdate', 'puplishtime', 'deadlinedate', 'deadlinetime') VALUES(?, ?, ?, ?, ?, ?, ?)",
+                   (userid), (name), (nquestions), (puplishdate), (puplishtime), (deadlinedate), (deadlinetime))
+
+        session["examid"] = db.execute("SELECT MAX(id) FROM exams")[0]["MAX(id)"]
+        
+        return redirect("/makequestions")
+        
+    else:
+        return render_template("makeexam.html")
+    
+    
+@app.route("/makequestions", methods=["GET", "POST"])
+@login_required
+def makequestions():
+    if request.method == "POST":
+        print("post")
+        
+    else:
+        examid = session["examid"]
+        nquestions = db.execute("SELECT nquestions FROM exams WHERE id = ?", examid)[0]["nquestions"]
+        return render_template("makequestions.html", nquestions=nquestions)
+    
 
 
 @app.route("/history")
