@@ -6,8 +6,8 @@
 
 {% block main %}
     <h5>Make Questions</h5>
-    <h5>Please fill all fields</h5>
-    <form action="/makeexam" method="post" id="questions">
+    <h5>Please fill all fields at once</h5>
+    <form action="/makequestions" method="post" id="questions">
         {% for row in range(nquestions) %}
             <textarea cols="70" autofocus required class="form-control stretchsize mx-auto w-auto" id="question{{row+1}}" name="question{{row+1}}" placeholder="Question {{row+1}}" type="text"></textarea>
             <div class="answerrow">
@@ -25,9 +25,9 @@
                 <div class="answer">
                     <textarea required cols="31" class="form-control mx-auto w-auto" id="answer{{row+1}}-4" name="answer{{row+1}}-4" placeholder="Answer 4" type="text"></textarea>    
                 </div>
-                <div class="answerrow">
-                    <textarea required cols="70" class="form-control mx-auto w-auto" id="rightanswer" name="answer" placeholder="Copy the right answer here" type="text"></textarea>    
-                </div>
+            <div class="answerrow">
+                <textarea required cols="70" class="form-control mx-auto w-auto" id="rightanswer{{row+1}}" name="rightanswer{{row+1}}" placeholder="Copy the right answer here" type="text"></textarea>    
+            </div>
             </div>
             <br>
             <script>

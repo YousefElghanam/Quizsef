@@ -15,7 +15,6 @@ app = Flask(__name__)
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
-
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
@@ -50,14 +49,19 @@ def index():
     
     # If user is student
     else:
-        return render_template("studentindex.html")
+        # Store rows of exams table
+        exams = db.execute("SELECT * FROM exams")
         
+        for i, exam in enumerate(exams):
+            exams[i]["teacher"] = db.execute("SELECT username FROM users WHERE id = ?", exam["user_id"])[0]["username"]
+        return render_template("studentindex.html", exams=exams)
+
 
 @app.route("/makeexam", methods=["GET", "POST"])
 @login_required
 def make_exam():
     
-    # User reacher route via POST
+    # User reaches route via POST
     if request.method == "POST":
         
         # Ensure all fields are filled
@@ -65,7 +69,7 @@ def make_exam():
         if not request.form.get("examname"):
             return apology("must provide a name for the exam", 403)
         
-        # Ensure number of questions is entered and is a positive integer
+        # Ensure number of questions is entered and is between 1 and 25
         if not request.form.get("nquestions"):
             return apology("must provide number of questions (a positive integer)", 403)
 
@@ -75,9 +79,11 @@ def make_exam():
         except (TypeError, ValueError):
             return apology("number of questions must be an integer number (1-25)", 403)
 
+        # Ensure puplish and deadline times are entered
         if not request.form.get("puplishdate") or not request.form.get("puplishtime") or not request.form.get("deadlinedate") or not request.form.get("deadlinetime"):
             return apology("must provide puplish and deadline dates and times", 403)
         
+        # Remember exam data
         userid = session["user_id"]
         name = request.form.get("examname")
         nquestions = request.form.get("nquestions")
@@ -86,28 +92,82 @@ def make_exam():
         deadlinedate = request.form.get("deadlinedate")
         deadlinetime = request.form.get("deadlinetime")
         
+        # Store exam in DB
         db.execute("INSERT INTO 'exams' ('user_id', 'name', 'nquestions', 'puplishdate', 'puplishtime', 'deadlinedate', 'deadlinetime') VALUES(?, ?, ?, ?, ?, ?, ?)",
                    (userid), (name), (nquestions), (puplishdate), (puplishtime), (deadlinedate), (deadlinetime))
 
+        # Remember examid
         session["examid"] = db.execute("SELECT MAX(id) FROM exams")[0]["MAX(id)"]
         
-        return redirect("/makequestions")
+        # Go to make question page after submitting
+        return render_template("makequestions.html", nquestions=int(nquestions))
         
+    # User reaches route via GET
     else:
         return render_template("makeexam.html")
+    
     
     
 @app.route("/makequestions", methods=["GET", "POST"])
 @login_required
 def makequestions():
+    # User reaches route via POST
     if request.method == "POST":
-        questions = {}
         
-        
-    else:
+        # Get examid and number of questions
         examid = session["examid"]
         nquestions = db.execute("SELECT nquestions FROM exams WHERE id = ?", examid)[0]["nquestions"]
-        return render_template("makequestions.html", nquestions=nquestions)
+        
+        # Loop through questions
+        for q in range(1, nquestions + 1):
+            
+            # Ensure question was entered
+            if not request.form.get("question{}".format(q)):
+                return apology("Must fill all question fields", 403)
+            
+            # Ensure the right answer was entered
+            if not request.form.get("rightanswer{}".format(q)):
+                return apology("Must fill all right answer fields", 403)
+            else:
+                rightanswer = request.form.get("rightanswer{}".format(q))
+
+            # Ensure answers were entered
+            for ans in range(1, 5):
+                mysterious_counter = 0
+                if not request.form.get("answer{}-{}".format(q, ans)):
+                    return apology("Must fill all answer fields at once", 403)
+                # ENsure the right answer matches one of the answers
+                if not request.form.get("answer{}-{}".format(q, ans)) == request.form.get("rightanswer{}".format(q)):
+                    mysterious_counter += 1
+                if mysterious_counter == 4:
+                    return apology("The right answer doesn't match any of the answers")
+                
+            
+            # Store question in DB
+            db.execute("INSERT INTO 'questions' ('examid', 'question_number', 'question') VALUES (?, ?, ?)", (examid), 
+                       (q), (request.form.get("question{}".format(q))))
+            
+            # Get question id
+            questionid = db.execute("SELECT id FROM questions WHERE examid = ?", examid)[q - 1]["id"]
+            
+            # Loop through answers
+            for ans in range(1, 5):
+                # Store answer in DB
+                db.execute("INSERT INTO 'answers' ('questionid', 'answer') VALUES (?, ?)", (questionid),
+                        (request.form.get("answer{}-{}".format(q, ans))))
+                
+                ansid = db.execute("SELECT MAX(id) FROM answers")[0]["MAX(id)"]
+                if rightanswer == request.form.get("answer{}-{}".format(q, ans)):
+                    db.execute("UPDATE answers SET isright = 1 WHERE id = ?", ansid)
+                    
+        return redirect("/")
+    
+    # User reaches route via GET
+    else:
+        return apology("Continue to questions from Make exam page")
+        # examid = session["examid"]
+        # nquestions = db.execute("SELECT nquestions FROM exams WHERE id = ?", examid)[0]["nquestions"]
+        # return render_template("makequestions.html", nquestions=nquestions)
     
 
 

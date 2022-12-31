@@ -6,15 +6,38 @@
 
 {% block main %}
     <div class="container">
-        STUDENT INDEX
         <div class="section">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Exam name</th>
+                        <th>Teacher</th>
+                        <th>Puplish Time</th>
+                        <th>Deadline</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in exams %}
+                        <tr>
+                            <td>{{ row.name }}</td>
+                            <td>{{ row.teacher }}</td>
+                            <td>
+                                <table class="table">
+                                    <!-- maybe put row tag here ?? <<<<<<<<<<<<<<<<<<<< -->
+                                    <td>{{ row.puplishdate }}</td>
+                                    <td>{{ row.puplishtime }}</td>
+                                </table>
+                            </td>
+                            <td>
+                                <table class="table">
+                                    <td>{{ row.deadlinedate }}</td>
+                                    <td>{{ row.deadlinetime }}</td>
+                                </table>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-
-        <div class="section">
-        </div>
-
-        <div class="section">
-        </div>
-        
     </div>
 {% endblock %}
