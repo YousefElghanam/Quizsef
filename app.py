@@ -52,8 +52,10 @@ def index():
         # Store rows of exams table
         exams = db.execute("SELECT * FROM exams")
         
+        # Add exam's teacher name to "exams"
         for i, exam in enumerate(exams):
             exams[i]["teacher"] = db.execute("SELECT username FROM users WHERE id = ?", exam["user_id"])[0]["username"]
+        
         return render_template("studentindex.html", exams=exams)
 
 
@@ -168,7 +170,25 @@ def makequestions():
         # examid = session["examid"]
         # nquestions = db.execute("SELECT nquestions FROM exams WHERE id = ?", examid)[0]["nquestions"]
         # return render_template("makequestions.html", nquestions=nquestions)
+
+
+@app.route("/exam", methods=["GET", "POST"])
+@login_required
+def exam():
+    if request.method == "POST":
+        return redirect("/")
     
+    else:
+        nquestions = request.form.get("nquestions")
+        
+        # Store rows of exams table
+        exams = db.execute("SELECT * FROM exams")
+        
+        # Add exam's teacher name to "exams"
+        for i, exam in enumerate(exams):
+            exams[i]["teacher"] = db.execute("SELECT username FROM users WHERE id = ?", exam["user_id"])[0]["username"]
+        
+        return render_template("exam.html", nquestions=int(nquestions))
 
 
 @app.route("/history")
