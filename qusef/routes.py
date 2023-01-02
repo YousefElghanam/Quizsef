@@ -1,37 +1,7 @@
-import os
-
-from cs50 import SQL
-from flask import Flask, redirect, render_template, request, session, url_for
-from flask_session import Session
+from qusef import db, app
+from flask import render_template, session, request, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
-
-from utils import apology, login_required
-
-
-# Configure application
-app = Flask(__name__)
-
-
-# Ensure templates are auto-reloaded
-app.config["TEMPLATES_AUTO_RELOAD"] = True
-
-# Configure session to use filesystem (instead of signed cookies)
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
-Session(app)
-
-# Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///qusef.db")
-
-
-@app.after_request
-def after_request(response):
-    """Ensure responses aren't cached"""
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Expires"] = 0
-    response.headers["Pragma"] = "no-cache"
-    return response
-
+from qusef.utils import login_required, apology
 
 @app.route("/")
 @login_required
@@ -69,7 +39,7 @@ def make_exam():
         # Ensure all fields are filled
         
         if not request.form.get("examname"):
-            return apology("must provide a name for the exam", 403)
+            flash("must provide a name for the exam", category="danger")
         
         # Ensure number of questions is entered and is between 1 and 25
         if not request.form.get("nquestions"):
@@ -77,7 +47,7 @@ def make_exam():
 
         try:
             if int(request.form.get("nquestions")) < 1 or int(request.form.get("nquestions")) > 25:
-                return apology("must provide a positive integer (1-25)", 403)
+                return apology("must provide a positive integer between (1-25)", 403)
         except (TypeError, ValueError):
             return apology("number of questions must be an integer number (1-25)", 403)
 
