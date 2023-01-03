@@ -39,7 +39,11 @@ def make_exam():
         # Ensure all fields are filled
         
         if not request.form.get("examname"):
-            flash("must provide a name for the exam", category="danger")
+            return apology("must provide a name for the exam")
+        
+        for name in db.execute("SELECT name FROM exams WHERE user_id = ?", session["user_id"]):
+            if request.form.get('examname') == name["name"]:
+                return apology("exam name already exists")
         
         # Ensure number of questions is entered and is between 1 and 25
         if not request.form.get("nquestions"):

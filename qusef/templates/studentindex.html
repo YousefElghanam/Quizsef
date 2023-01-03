@@ -14,6 +14,7 @@
                         <th>Teacher</th>
                         <th>Puplish Time</th>
                         <th>Deadline</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -33,6 +34,9 @@
                                     <td>{{ row.deadlinedate }}</td>
                                     <td>{{ row.deadlinetime }}</td>
                                 </table>
+                            </td>
+                            <td>
+                                <button class="btn btn-primary" type="submit">Start</button>
                             </td>
                         </tr>
                     {% endfor %}
