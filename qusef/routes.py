@@ -1,7 +1,7 @@
 from qusef import db, app
 from flask import render_template, session, request, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
-from qusef.utils import login_required, apology
+from qusef.utils import login_required, apology, result
 
 @app.route("/")
 @login_required
@@ -21,6 +21,9 @@ def index():
     else:
         # Store rows of exams table
         exams = db.execute("SELECT * FROM exams")
+        
+        # Store teachers' ids'
+        
         
         # Add exam's teacher name to "exams"
         for i, exam in enumerate(exams):
@@ -146,23 +149,52 @@ def makequestions():
         # return render_template("makequestions.html", nquestions=nquestions)
 
 
-@app.route("/exam", methods=["GET", "POST"])
+@app.route("/<teacherid>/<examname>", methods=["GET", "POST"])
 @login_required
-def exam():
+def exam(teacherid, examname):
     if request.method == "POST":
-        return redirect("/")
+        # Get exam id
+        examid = db.execute("SELECT id FROM exams WHERE user_id = ? AND name = ?", (teacherid), (examname))[0]["id"]
+        # Get exam's number of questions
+        nquestions = db.execute("SELECT nquestions FROM exams WHERE id = ?", examid)[0]["nquestions"]
+        # Number of right answers
+        count = 0
+        # Loop through questions
+        for i in range(nquestions):
+            # Ensure all fields were filled
+            if not request.form.get("rightanswer{}".format(i+1)):
+                return apology("Must answer all questions", 403)
+            # Count right answers
+            ans = request.form.get("rightanswer{}".format(i))
+            if db.execute("SELECT isright FROM answers WHERE answer = ?", ans):
+                count += 1
+
+        return result("You answered {} answers correctly".format(count), count)
     
     else:
-        nquestions = request.form.get("nquestions")
-        
         # Store rows of exams table
-        exams = db.execute("SELECT * FROM exams")
+        exams = db.execute("SELECT * FROM exams WHERE user_id = ? AND name = ?",
+                           (teacherid), (examname))
+        answers = {}
         
         # Add exam's teacher name to "exams"
         for i, exam in enumerate(exams):
+            exams[i]["questions"] = []
+            exams[i]["answers"] = {}
             exams[i]["teacher"] = db.execute("SELECT username FROM users WHERE id = ?", exam["user_id"])[0]["username"]
+            # Append questions to "exams"'s "questions" key as strings
+            for n in range(exam["nquestions"]):
+                exams[i]["questions"].append(db.execute("SELECT question FROM questions WHERE examid = ?", exam["id"])[n]["question"])
+            # Add answers to "answers" dictionary
+            for q, qu in enumerate(exams[i]["questions"]):
+                exams[i]["answers"][qu] = []
+                for x in range(4):
+                    exams[i]["answers"][qu].append(db.execute("SELECT answer FROM answers WHERE questionid = ?",
+                               (db.execute("SELECT id FROM questions WHERE examid = ?",
+                                           (db.execute("SELECT id FROM exams WHERE user_id = ? AND name = ?",
+                                                       (teacherid), (examname))[0]["id"]))[q]["id"]))[x]["answer"])
         
-        return render_template("exam.html", nquestions=int(nquestions))
+        return render_template("exam.html", exam=exams, teacherid=teacherid, examname=examname)
 
 
 @app.route("/history")
