@@ -7,29 +7,28 @@ from qusef.utils import login_required, apology, result
 @login_required
 def index():
     
+    username = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])[0]["username"]
+
     # If user is teacher
-    isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])
+    isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])[0]["isteacher"]
     
-    if isteacher[0]["isteacher"]:
+    if isteacher == 1:
         
         # Store rows of exams table
         exams = db.execute("SELECT * FROM exams WHERE user_id = ?", session["user_id"])
         
-        return render_template("teacherindex.html", exams=exams, isteacher=isteacher)
+        return render_template("teacherindex.html", exams=exams, isteacher=isteacher, username=username)
     
     # If user is student
     else:
         # Store rows of exams table
         exams = db.execute("SELECT * FROM exams")
         
-        # Store teachers' ids'
-        
-        
         # Add exam's teacher name to "exams"
         for i, exam in enumerate(exams):
             exams[i]["teacher"] = db.execute("SELECT username FROM users WHERE id = ?", exam["user_id"])[0]["username"]
         
-        return render_template("studentindex.html", exams=exams)
+        return render_template("studentindex.html", exams=exams, username=username)
 
 
 @app.route("/makeexam", methods=["GET", "POST"])
@@ -58,8 +57,8 @@ def make_exam():
         except (TypeError, ValueError):
             return apology("number of questions must be an integer number (1-25)", 403)
 
-        # Ensure puplish and deadline times are entered
-        if not request.form.get("puplishdate") or not request.form.get("puplishtime") or not request.form.get("deadlinedate") or not request.form.get("deadlinetime"):
+        # Ensure deadline time is entered
+        if not request.form.get("deadlinedate") or not request.form.get("deadlinetime"):
             return apology("must provide puplish and deadline dates and times", 403)
         
         # Remember exam data
@@ -83,7 +82,12 @@ def make_exam():
         
     # User reaches route via GET
     else:
-        return render_template("makeexam.html")
+        # Check if user is teacher or not
+        isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])[0]["isteacher"]
+        if isteacher == 1:
+            return render_template("makeexam.html")
+        else:
+            return apology("You must be a teacher to make an exam")
     
     
     
@@ -152,7 +156,14 @@ def makequestions():
 @app.route("/<teacherid>/<examname>", methods=["GET", "POST"])
 @login_required
 def exam(teacherid, examname):
+    # Check if user is not student
+    if db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])[0]["isteacher"] == 1:
+        return apology("Only students can submit exam answers")
     if request.method == "POST":
+        # Get student name
+        studentname = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])[0]["username"]
+        # Get teacher name
+        teachername = db.execute("SELECT username FROM users WHERE id = ?", teacherid)[0]["username"]
         # Get exam id
         examid = db.execute("SELECT id FROM exams WHERE user_id = ? AND name = ?", (teacherid), (examname))[0]["id"]
         # Get exam's number of questions
@@ -164,18 +175,22 @@ def exam(teacherid, examname):
             # Ensure all fields were filled
             if not request.form.get("rightanswer{}".format(i+1)):
                 return apology("Must answer all questions", 403)
+            question = request.form.get("question{}".format(i+1))
+            questionid = db.execute("SELECT id FROM questions WHERE question = ?", (question))[0]["id"]
             # Count right answers
-            ans = request.form.get("rightanswer{}".format(i))
-            if db.execute("SELECT isright FROM answers WHERE answer = ?", ans):
+            ans = request.form.get("rightanswer{}".format(i+1))
+            if db.execute("SELECT isright FROM answers WHERE answer = ? AND questionid = ?", (ans), (questionid))[0]["isright"] == 1:
                 count += 1
+        # Record submission to history
+        db.execute("INSERT INTO 'history' ('teacher_name', 'exam_name', 'student_name', 'nquestions', 'correct_answers') VALUES (?, ?, ?, ?, ?)",
+                   (teachername), (examname), (studentname), (nquestions), (count))
 
-        return result("You answered {} answers correctly".format(count), count)
+        return result("Yew answeored {} queostions ceorrectly".format(count), count)
     
     else:
         # Store rows of exams table
         exams = db.execute("SELECT * FROM exams WHERE user_id = ? AND name = ?",
                            (teacherid), (examname))
-        answers = {}
         
         # Add exam's teacher name to "exams"
         for i, exam in enumerate(exams):
@@ -200,12 +215,20 @@ def exam(teacherid, examname):
 @app.route("/history")
 @login_required
 def history():
-    """Show history of transactions"""
-
-    # Store rows of history table
-    history = db.execute("SELECT * FROM history WHERE user_id = ?", session["user_id"])
-    return render_template("history.html", history=history)
-
+    """Show history of submissions of your exams"""
+    
+    teachername = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])[0]["username"]
+    
+    isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])[0]["isteacher"]
+    # If user is a teacher
+    if isteacher == 1:
+        # Store rows of history table
+        history = db.execute("SELECT * FROM history WHERE teacher_name = ?", teachername)
+        
+        return render_template("history.html", history=history)
+    # If user is a student
+    else:
+        """Show history of student's submissions"""
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -359,6 +382,6 @@ def settings():
     # On visiting "/settings"
     else:
         # If user is teacher
-        isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])
+        isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])[0]["isteacher"]
         
         return render_template("settings.html", isteacher=isteacher)

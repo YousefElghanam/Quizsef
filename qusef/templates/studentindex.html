@@ -55,7 +55,9 @@
                             </table>
                         </td>
                         <td>
-                            <button class="btn btn-primary" type="button">Start</button>
+                            <form action="/{{row.user_id}}/{{row.name}}">
+                                <button class="btn btn-primary">Start</button>
+                            </form>
                         </td>
                     </tr>
                 {% endfor %}

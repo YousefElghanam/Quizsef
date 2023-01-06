@@ -8,15 +8,26 @@
     <div class="container">
         <div class="section">
             <table class="table">
+                <h5>Submissions</h5>
                 <thead>
                     <tr>
-                        <th><!-- table head here --></th>
+                        <th>Exam Name</th>
+                        <th>Student Name</th>
+                        <th>Total Questions</th>
+                        <th>Correct Answers</th>
+                        <th>Date</th>
+                        <th>Time</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for row in history %}
                         <tr>
-                            <td><!-- table data here --></td></td>
+                            <td>{{row.exam_name}}</td>
+                            <td>{{row.student_name}}</td>
+                            <td>{{row.nquestions}}</td>
+                            <td>{{row.correct_answers}}</td>
+                            <td>{{row.date}}</td>
+                            <td>{{row.time}}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
