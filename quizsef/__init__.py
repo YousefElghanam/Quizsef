@@ -15,7 +15,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///qusef/qusef.db")
+db = SQL("sqlite:///quizsef/quizsef.db")
 
 
 @app.after_request
@@ -26,4 +26,4 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-from qusef import routes
+from quizsef import routes

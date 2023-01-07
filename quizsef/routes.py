@@ -1,7 +1,7 @@
-from qusef import db, app
+from quizsef import db, app
 from flask import render_template, session, request, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
-from qusef.utils import login_required, apology, result
+from quizsef.utils import login_required, apology, result
 
 @app.route("/")
 @login_required
