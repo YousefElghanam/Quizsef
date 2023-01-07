@@ -6,14 +6,12 @@ from quizsef.utils import login_required, apology, result
 @app.route("/")
 @login_required
 def index():
-    
     username = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])[0]["username"]
 
     # If user is teacher
     isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])[0]["isteacher"]
     
     if isteacher == 1:
-        
         # Store rows of exams table
         exams = db.execute("SELECT * FROM exams WHERE user_id = ?", session["user_id"])
         
@@ -60,31 +58,26 @@ def make_exam():
         # Ensure deadline time is entered
         if not request.form.get("deadlinedate") or not request.form.get("deadlinetime"):
             return apology("must provide puplish and deadline dates and times", 403)
-        
-        # Remember exam data
-        userid = session["user_id"]
-        name = request.form.get("examname")
-        nquestions = request.form.get("nquestions")
-        puplishdate = request.form.get("puplishdate")
-        puplishtime = request.form.get("puplishtime")
-        deadlinedate = request.form.get("deadlinedate")
-        deadlinetime = request.form.get("deadlinetime")
-        
-        # Store exam in DB
-        db.execute("INSERT INTO 'exams' ('user_id', 'name', 'nquestions', 'puplishdate', 'puplishtime', 'deadlinedate', 'deadlinetime') VALUES(?, ?, ?, ?, ?, ?, ?)",
-                   (userid), (name), (nquestions), (puplishdate), (puplishtime), (deadlinedate), (deadlinetime))
 
-        # Remember examid
-        session["examid"] = db.execute("SELECT MAX(id) FROM exams")[0]["MAX(id)"]
-        
+        # Store examdata, to transfer it to questions page
+        examdata = {
+            "userid": session["user_id"],
+            "examname": request.form.get("examname"),
+            "nquestions": request.form.get("nquestions"),
+            "puplishdate": request.form.get("puplishdate"),
+            "puplishtime": request.form.get("puplishtime"),
+            "deadlinedate": request.form.get("deadlinedate"),
+            "deadlinetime": request.form.get("deadlinetime")
+            }
+        session["examdata"] = examdata
+                
         # Go to make question page after submitting
-        return render_template("makequestions.html", nquestions=int(nquestions))
+        return render_template("makequestions.html", nquestions=int(examdata["nquestions"]))
         
     # User reaches route via GET
     else:
         # Check if user is teacher or not
-        isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])[0]["isteacher"]
-        if isteacher == 1:
+        if db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])[0]["isteacher"] == 1:
             return render_template("makeexam.html")
         else:
             return apology("You must be a teacher to make an exam")
@@ -97,12 +90,12 @@ def makequestions():
     # User reaches route via POST
     if request.method == "POST":
         
-        # Get examid and number of questions
-        examid = session["examid"]
-        nquestions = db.execute("SELECT nquestions FROM exams WHERE id = ?", examid)[0]["nquestions"]
+        examdata = session["examdata"]
+        
+        nquestions = int(examdata["nquestions"])
         
         # Loop through questions
-        for q in range(1, nquestions + 1):
+        for q in range(1, int(nquestions) + 1):
             
             # Ensure question was entered
             if not request.form.get("question{}".format(q)):
@@ -119,19 +112,27 @@ def makequestions():
                 mysterious_counter = 0
                 if not request.form.get("answer{}-{}".format(q, ans)):
                     return apology("Must fill all answer fields at once", 403)
-                # ENsure the right answer matches one of the answers
+                # Ensure the right answer matches one of the answers
                 if not request.form.get("answer{}-{}".format(q, ans)) == request.form.get("rightanswer{}".format(q)):
                     mysterious_counter += 1
                 if mysterious_counter == 4:
                     return apology("The right answer doesn't match any of the answers")
                 
+            # Store exam in DB ( exams, questions, answers )
             
-            # Store question in DB
+            db.execute("BEGIN TRANSACTION")
+            # Insert into exams
+            db.execute("INSERT INTO 'exams' ('user_id', 'name', 'nquestions', 'deadlinedate', 'deadlinetime') VALUES (?, ?, ?, ?, ?)",
+                       (examdata["userid"]), (examdata["name"]), (examdata["nquestions"]), (examdata["deadlinedate"]), (examdata["deadlinetime"]))
+            # Remember last inserted exam id
+            examid = db.execute("SELECT last_insert_rowid()")[0]["last_insert_rowid()"]
+            # Insert into questions
             db.execute("INSERT INTO 'questions' ('examid', 'question_number', 'question') VALUES (?, ?, ?)", (examid), 
                        (q), (request.form.get("question{}".format(q))))
             
-            # Get question id
-            questionid = db.execute("SELECT id FROM questions WHERE examid = ?", examid)[q - 1]["id"]
+            # Remember last inserted question id
+            questionid = db.execute("SELECT last_insert_rowid()")[0]["last_insert_rowid()"]
+            #db.execute("SELECT id FROM questions WHERE examid = ?", examid)[q - 1]["id"]
             
             # Loop through answers
             for ans in range(1, 5):
@@ -139,7 +140,8 @@ def makequestions():
                 db.execute("INSERT INTO 'answers' ('questionid', 'answer') VALUES (?, ?)", (questionid),
                         (request.form.get("answer{}-{}".format(q, ans))))
                 
-                ansid = db.execute("SELECT MAX(id) FROM answers")[0]["MAX(id)"]
+                ansid = db.execute("SELECT last_insert_rowid()")[0]["last_insert_rowid()"]
+                #db.execute("SELECT MAX(id) FROM answers")[0]["MAX(id)"]
                 if rightanswer == request.form.get("answer{}-{}".format(q, ans)):
                     db.execute("UPDATE answers SET isright = 1 WHERE id = ?", ansid)
                     
