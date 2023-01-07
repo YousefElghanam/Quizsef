@@ -196,6 +196,14 @@ def exam(teacherid, examname):
         return result("Yew answeored {} queostions ceorrectly".format(count), count)
     
     else:
+        # Get teacher name
+        teachername = db.execute("SELECT username FROM users WHERE id = ?", teacherid)[0]["username"]
+        # Get student name
+        studentname = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])[0]["username"]
+        if db.execute("SELECT * FROM history WHERE teacher_name = ? AND exam_name = ? AND student_name = ?",
+                      (teachername), (examname), (studentname) ):
+            return apology("You submitted this exam before")
+        
         # Store rows of exams table
         exams = db.execute("SELECT * FROM exams WHERE user_id = ? AND name = ?", (teacherid), (examname))
         
@@ -235,6 +243,7 @@ def history():
         return render_template("history.html", history=history)
     # If user is a student
     else:
+        return apology("go back, loser")
         """Show history of student's submissions"""
 
 @app.route("/login", methods=["GET", "POST"])
