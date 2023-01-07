@@ -6,7 +6,8 @@
 
 {% block main %}
     <h5>Make Questions</h5>
-    <h5>Please fill all fields at once</h5>
+    <h5>Please fill all fields at once,</h5>
+    <h5>and make sure the right answer field exactly matches one of the answer</h5>
     <form action="/makequestions" method="post" id="questions">
         {% for row in range(nquestions) %}
             <textarea cols="70" autofocus required class="form-control stretchsize mx-auto w-auto" id="question{{row+1}}" name="question{{row+1}}" placeholder="Question {{row+1}}" type="text"></textarea>

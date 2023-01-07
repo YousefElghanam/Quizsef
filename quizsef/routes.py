@@ -94,8 +94,11 @@ def makequestions():
         
         nquestions = int(examdata["nquestions"])
         
+        db.execute("BEGIN TRANSACTION")
+        # variable to make line 127 excute only once per exam
+        executed = False
         # Loop through questions
-        for q in range(1, int(nquestions) + 1):
+        for q in range(1, nquestions + 1):
             
             # Ensure question was entered
             if not request.form.get("question{}".format(q)):
@@ -108,24 +111,26 @@ def makequestions():
                 rightanswer = request.form.get("rightanswer{}".format(q))
 
             # Ensure answers were entered
+            mysterious_flag = True
             for ans in range(1, 5):
-                mysterious_counter = 0
                 if not request.form.get("answer{}-{}".format(q, ans)):
                     return apology("Must fill all answer fields at once", 403)
                 # Ensure the right answer matches one of the answers
-                if not request.form.get("answer{}-{}".format(q, ans)) == request.form.get("rightanswer{}".format(q)):
-                    mysterious_counter += 1
-                if mysterious_counter == 4:
-                    return apology("The right answer doesn't match any of the answers")
+                if request.form.get("answer{}-{}".format(q, ans)) == request.form.get("rightanswer{}".format(q)):
+                    mysterious_flag = False
+            if mysterious_flag:
+                return apology("The right answer of question-{} doesn't match any of the answers".format(q))
                 
             # Store exam in DB ( exams, questions, answers )
             
-            db.execute("BEGIN TRANSACTION")
             # Insert into exams
-            db.execute("INSERT INTO 'exams' ('user_id', 'name', 'nquestions', 'deadlinedate', 'deadlinetime') VALUES (?, ?, ?, ?, ?)",
-                       (examdata["userid"]), (examdata["name"]), (examdata["nquestions"]), (examdata["deadlinedate"]), (examdata["deadlinetime"]))
-            # Remember last inserted exam id
-            examid = db.execute("SELECT last_insert_rowid()")[0]["last_insert_rowid()"]
+            if not executed:
+                db.execute("INSERT INTO 'exams' ('user_id', 'name', 'nquestions', 'deadlinedate', 'deadlinetime') VALUES (?, ?, ?, ?, ?)",
+                        (examdata["userid"]), (examdata["examname"]), (examdata["nquestions"]), (examdata["deadlinedate"]), (examdata["deadlinetime"]))
+                executed = True
+                # Remember last inserted exam id
+                examid = db.execute("SELECT last_insert_rowid()")[0]["last_insert_rowid()"]
+
             # Insert into questions
             db.execute("INSERT INTO 'questions' ('examid', 'question_number', 'question') VALUES (?, ?, ?)", (examid), 
                        (q), (request.form.get("question{}".format(q))))
@@ -144,6 +149,7 @@ def makequestions():
                 #db.execute("SELECT MAX(id) FROM answers")[0]["MAX(id)"]
                 if rightanswer == request.form.get("answer{}-{}".format(q, ans)):
                     db.execute("UPDATE answers SET isright = 1 WHERE id = ?", ansid)
+        db.execute("COMMIT TRANSACTION")
                     
         return redirect("/")
     
@@ -191,17 +197,16 @@ def exam(teacherid, examname):
     
     else:
         # Store rows of exams table
-        exams = db.execute("SELECT * FROM exams WHERE user_id = ? AND name = ?",
-                           (teacherid), (examname))
+        exams = db.execute("SELECT * FROM exams WHERE user_id = ? AND name = ?", (teacherid), (examname))
         
         # Add exam's teacher name to "exams"
         for i, exam in enumerate(exams):
             exams[i]["questions"] = []
             exams[i]["answers"] = {}
-            exams[i]["teacher"] = db.execute("SELECT username FROM users WHERE id = ?", exam["user_id"])[0]["username"]
+            exams[i]["teacher"] = db.execute("SELECT username FROM users WHERE id = ?", exams[i]["user_id"])[0]["username"]
             # Append questions to "exams"'s "questions" key as strings
-            for n in range(exam["nquestions"]):
-                exams[i]["questions"].append(db.execute("SELECT question FROM questions WHERE examid = ?", exam["id"])[n]["question"])
+            for n in range(exams[i]["nquestions"]):
+                exams[i]["questions"].append(db.execute("SELECT question FROM questions WHERE examid = ?", exams[i]["id"])[n]["question"])
             # Add answers to "answers" dictionary
             for q, qu in enumerate(exams[i]["questions"]):
                 exams[i]["answers"][qu] = []
