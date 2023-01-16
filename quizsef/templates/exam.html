@@ -6,7 +6,6 @@
 
 {% block main %}
     <h5>Answer Questions</h5>
-    <h5>Click one of the answers to copy it</h5>
     <form action="/{{teacherid}}/{{examname}}" method="post">
         {% for row in range(exam[0]["nquestions"]) %}
         <p>

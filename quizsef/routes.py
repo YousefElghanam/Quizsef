@@ -216,6 +216,8 @@ def exam(teacherid, examname):
         return result("Yew answeored {} queostions ceorrectly".format(count), count)
     
     else:
+        # Check if student submitted this exam before
+        
         # Get teacher name
         teachername = db.execute("SELECT username FROM users WHERE id = ?", teacherid)[0]["username"]
         # Get student name
