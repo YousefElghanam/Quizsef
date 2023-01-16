@@ -35,16 +35,12 @@
                     this.style.height = "auto";
                     this.style.height = `${this.scrollHeight}px`;
                 });
-                const rightAnswer{{row+1}} = document.getElementById("rightanswer{{row+1}}");
-                rightAnswer{{row+1}}.style.cssText = `height: ${rightAnswer{{row+1}}.scrollHeight}px; overflow-y: hidden`;
+                const rightAnswer = document.getElementById("rightanswer");
+                rightAnswer.style.cssText = `height: ${rightAnswer.scrollHeight}px; overflow-y: hidden`;
 
-                rightAnswer{{row+1}}.addEventListener("input", function(){
+                rightAnswer.addEventListener("input", function(){
                     this.style.height = "auto";
                     this.style.height = `${this.scrollHeight}px`;
                 });
 
-                function copy(id) {
-                    let textarea = document.getElementById(id);
-                    textarea.select();
-                    document.execCommand("copy");
-                  }
+            
