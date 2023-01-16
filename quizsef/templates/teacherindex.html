@@ -6,12 +6,12 @@
 
 {% block main %}
     <div class="container">
-        <div class="section">
+        <div class="section horscroll">
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Exam name</th>
-                        <th>Puplish Time</th>
+                        <th>Name</th>
+                        <th>Puplished</th>
                         <th>Deadline</th>
                     </tr>
                 </thead>
@@ -19,18 +19,12 @@
                     {% for row in exams %}
                         <tr>
                             <td>{{ row.name }}</td>
+                            <td>{{ row.puplishdate }} || {{ row.puplishtime }}</td>
+                            <td>{{ row.deadlinedate }} || {{ row.deadlinetime }}</td>
                             <td>
-                                <table class="table">
-                                    <!-- maybe put row tag here ?? <<<<<<<<<<<<<<<<<<<< -->
-                                    <td>{{ row.puplishdate }}</td>
-                                    <td>{{ row.puplishtime }}</td>
-                                </table>
-                            </td>
-                            <td>
-                                <table class="table">
-                                    <td>{{ row.deadlinedate }}</td>
-                                    <td>{{ row.deadlinetime }}</td>
-                                </table>
+                                <form action="/" method="post">
+                                    <button name="delete" type="submit" class="btn btn-primary" value="{{row.name}}">Delete</button>
+                                </form>
                             </td>
                         </tr>
                     {% endfor %}

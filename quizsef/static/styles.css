@@ -21,6 +21,7 @@ nav .navbar-brand .green
 {
     color: #2e944b;
 }
+
 .answerrow {
   text-align: center;
 }
@@ -104,4 +105,9 @@ input[type="radio"]{
 #option-1:checked:checked ~ .option-1 span,
 #option-2:checked:checked ~ .option-2 span{
   color: #fff;
+}
+
+.horscroll {
+  overflow: auto;
+  white-space: nowrap;
 }

@@ -3,31 +3,51 @@ from flask import render_template, session, request, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
 from quizsef.utils import login_required, apology, result
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    username = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])[0]["username"]
+    if request.method == "GET":
+        username = db.execute("SELECT username FROM users WHERE id = ?", session["user_id"])[0]["username"]
 
-    # If user is teacher
-    isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])[0]["isteacher"]
-    
-    if isteacher == 1:
-        # Store rows of exams table
-        exams = db.execute("SELECT * FROM exams WHERE user_id = ?", session["user_id"])
+        # If user is teacher
+        isteacher = db.execute("SELECT isteacher FROM users WHERE id = ?", session["user_id"])[0]["isteacher"]
         
-        return render_template("teacherindex.html", exams=exams, isteacher=isteacher, username=username)
-    
-    # If user is student
+        if isteacher == 1:
+            # Store rows of exams table
+            exams = db.execute("SELECT * FROM exams WHERE user_id = ?", session["user_id"])
+            
+            return render_template("teacherindex.html", exams=exams, isteacher=isteacher, username=username)
+        
+        # If user is student
+        else:
+            # Store rows of exams table
+            exams = db.execute("SELECT * FROM exams")
+            
+            # Add exam's teacher name to "exams"
+            for i, exam in enumerate(exams):
+                exams[i]["teacher"] = db.execute("SELECT username FROM users WHERE id = ?", exam["user_id"])[0]["username"]
+            
+            return render_template("studentindex.html", exams=exams, username=username)
+        
+    # Handle deletion of exams
     else:
-        # Store rows of exams table
-        exams = db.execute("SELECT * FROM exams")
+        db.execute("BEGIN TRANSACTION")
         
-        # Add exam's teacher name to "exams"
-        for i, exam in enumerate(exams):
-            exams[i]["teacher"] = db.execute("SELECT username FROM users WHERE id = ?", exam["user_id"])[0]["username"]
+        examname = request.form.get("delete")
+        examid = db.execute("SELECT id FROM exams WHERE user_id = ? AND name = ?", (session["user_id"]), (examname))[0]["id"]
+        nquestions = db.execute("SELECT nquestions FROM exams WHERE id = ?", (examid))[0]["nquestions"]
+        questions = db.execute("SELECT id FROM questions WHERE examid = ?", (examid))
         
-        return render_template("studentindex.html", exams=exams, username=username)
-
+        # Delete exam, questions and answers
+        db.execute("DELETE FROM exams WHERE id = ?", (examid))
+        db.execute("DELETE FROM questions WHERE examid = ?", (examid))
+        for q in range(nquestions):
+            questionid = questions[q]["id"]
+            db.execute("DELETE FROM answers WHERE questionid = ?", (questionid))
+            
+        db.execute("COMMIT TRANSACTION")
+        
+        return redirect("/")
 
 @app.route("/makeexam", methods=["GET", "POST"])
 @login_required

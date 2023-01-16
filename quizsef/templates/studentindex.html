@@ -25,15 +25,14 @@
     </div>
 </div>
 <div class="container">
-    <div class="section">
+    <div class="section horscroll">
         <table class="table">
             <thead>
                 <tr>
-                    <th>Exam name</th>
+                    <th>Name</th>
                     <th>Teacher</th>
-                    <th>Puplish Time</th>
+                    <th>Puplished</th>
                     <th>Deadline</th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -41,19 +40,8 @@
                     <tr>
                         <td>{{ row.name }}</td>
                         <td>{{ row.teacher }}</td>
-                        <td>
-                            <table class="table">
-                                <!-- maybe put row tag here ?? <<<<<<<<<<<<<<<<<<<< -->
-                                <td>{{ row.puplishdate }}</td>
-                                <td>{{ row.puplishtime }}</td>
-                            </table>
-                        </td>
-                        <td>
-                            <table class="table">
-                                <td>{{ row.deadlinedate }}</td>
-                                <td>{{ row.deadlinetime }}</td>
-                            </table>
-                        </td>
+                        <td>{{ row.puplishdate }}</td>
+                        <td>{{ row.deadlinedate }} || {{ row.deadlinetime }}</td>
                         <td>
                             <form action="/{{row.user_id}}/{{row.name}}">
                                 <button class="btn btn-primary">Start</button>
