@@ -4,7 +4,33 @@
 
 Quizsef is a web-based quiz application made for teachers and students. Teachers can use Quizsef to make exams
 for students to answer, and view student submissions of each of their exams. Students can use QUizsef to browse
-all available exams and submit answers for any of these exams.
+all available exams and submit answers for any of those exams.
+
+Technologies used:
+	Python: Main programming language for handling authentication, sessions, correctness of submitted
+			forms, storing information in the database, rendering templates, redirects and more.
+			The decision to choose python was easy for me, the main deciding factor was that I worked with
+			python in the previous CS50 Problem Set, using the Flask framework, other reasons may include
+			simplicity of python code and it being beginner friendly, Flask itself and others.
+
+	Flask: The main framework used for making the web application.
+	
+	HTML, CSS: You know.
+	
+	VSCode: Easy to use editor, many extensions to choose from and make my code writing experience much easier.
+
+	Google Chrome: Google Chrome.
+
+	Windows 11: It's what I have 🤷.
+
+
+Websites that hepled me:
+	w3schools.com: A really good source to learn different languages, with examples and a built-in compiler.
+	
+	palletsprojects.com/p/flask: Flasks' documentation.
+
+	stackoverflow.com: Search google for help when you have errors or bugs in your code, and you'll probably
+					end up here with a very specific answer.
 
 The following files can be found inside of the main directory:
 
@@ -12,6 +38,7 @@ The following files can be found inside of the main directory:
 
 	This file is used to run the application, that is by running flask.
 	It imports app variable from __init__.py inside the app's package.
+	Run this file to start the application.
 
 
 ==> /quizsef >> This folder contains quizsef package.
@@ -19,7 +46,7 @@ The following files can be found inside of the main directory:
 	||
 	||
 	|_> /static >> Contains appplication icon(favicon.ico) and CSS styling file(styles.css).
-	||	||
+		||
 	||	||
 	||	|_> /styles.css:
 	||
@@ -30,7 +57,7 @@ The following files can be found inside of the main directory:
 	||
 	||
 	|_> /templates >> Contains all pages html files.
-	||	||
+		||
 	||	||
 	||	|_> /apology.html:
 	||
@@ -110,6 +137,19 @@ The following files can be found inside of the main directory:
 	|_> /quizsef.db:
 
 	||	Database file.
+	||		Tables:
+	||			answers:	id -- questionid -- answer -- isright
+	||
+	||			exams:	id -- user_id -- name -- nquestions -- unique_submissions -- puplishdate
+	||					puplishtime -- deadlinedate -- deadlinetime
+	||
+	||			history:	id -- teacher_name -- exam_name -- student_name -- nqiestions --
+	||					correct_answers -- date -- time
+	||
+	||			questions: id -- examid -- question_number -- question
+	||
+	||			users:	id -- username -- email -- hash -- isteacher
+	||			
 	||
 	||
 	|_> /utils.py:
@@ -120,9 +160,92 @@ The following files can be found inside of the main directory:
 	||	( result ):
 	||		This method is responsible for rendering result template.
 	||	( login_required ):
-	||		This decorator is called before routes methods to require login.
+	||		This decorator is called before routes methods to require login. If user calls the decorated
+	||		URL without being loggd in, he is redirected to login page
 	||
 	||
 	|_> /routes.py:
 	
-	||	This is the main file
+		This is the main file that contains most of the work. It contains routes for all urls.
+		The code that is written in this file is pretty much self explanatory. and is filled
+		with helping comments.
+		
+		( "/" ), login_required:
+		POST	 GET
+		 ||	 ||
+		 ||	 |_> renders: "teacherindex.html"
+		 ||			  "studentindex.html"
+		 ||		
+		 |_> handles deletion, redirects to: "/"
+	
+			
+		( "/makeexam" ), login_required:
+		POST	 GET
+		 ||	 ||
+		 ||	 |_> renders: "makeexam.html"
+		 ||
+		 |_> handles correctness of submitted exam, renders: "makequestions.html"
+	
+	
+		( "/makequestions" ), login_required:
+		POST	 GET
+		 ||	 ||
+		 ||	 |_> renders: apology(), you can only reach here from "/makeexma"
+		 ||
+		 |_> handles correctness of submitted questions, redirects to: "/"
+	
+	
+		( "/<teacherid>/<examname>" ), login_required:
+		POST	 GET
+		 ||	 ||
+		 ||	 |_> handles storage of specified exam data, renders: "exam.html"
+		 ||
+		 |_> handles correctness of submitted answers, renders: result(), with the number of
+			correct answers
+	
+	
+		( "/history" ), login_required:
+			 GET
+		 	 ||
+			 |_> handles storage of submitted answers history, renders: "history.html"
+	
+	
+		( "/login" ):
+		POST	 GET
+		 ||	 ||
+		 ||	 |_> renders: "login.html"
+		 ||
+		 |_> handles correctness of submitted login credentials, redirects to: "/"
+
+
+		( "logout" ):
+			 GET
+			 ||
+			 |_> clears session, redirects to: "/"
+
+
+		( "/register" ):
+		POST	 GET
+		 ||	 ||
+		 ||	 |_> renders: "register.html"
+		 ||
+		 |_> handles correctness of submitted register credentials, stores user in DB,
+		 	redirects to: "/"
+
+
+		( "/settings" ), login_required:
+		POST	 GET
+		 ||	 ||
+		 ||	 |_> renders: "settings.html"
+		 ||
+		 |_> handles correctness of submitted reset password form, updates password in Db,
+			redirects to: "/"
+		 
+
+==> README.md: ( THIS FILE )
+
+
+
+
+
+return render_template("THIS_WAS_CS50.html")
